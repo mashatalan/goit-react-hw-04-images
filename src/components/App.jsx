@@ -26,11 +26,14 @@ export default function App() {
   const imagesLimit = 12;
 
   useEffect(() => {
+    const fetchData = async () => {
+      if (!page || query.trim() === '') {
+        return;
+      }
 
-    const loadImages = async (query) => {
       try {
         setIsLoading(true);
-        const { hits, total } = await fetchAPI(query, page);
+        const { hits, totalHits } = await fetchAPI(query, page);
         if (hits.length === 0) {
           return toast(`🦄 Sorry, but there is no data for '${query}'`, {
             className: 'toast-message',
@@ -38,21 +41,7 @@ export default function App() {
         }
         setImages((prevImages) => [...prevImages, ...hits]);
         setImagesOnPage((prevImagesOnPage) => prevImagesOnPage + hits.length);
-        setTotalImages(total);
-      } catch (error) {
-        setError(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const fetchData = async () => {
-      if (!page || query.trim() === '') {
-        return;
-      }
-      try {
-        setIsLoading(true);
-        await loadImages(query);
+        setTotalImages(totalHits);
       } catch (error) {
         setError(error);
       } finally {
@@ -61,12 +50,11 @@ export default function App() {
     };
 
     fetchData().catch(e => console.log(e));
-
   }, [page, query]);
 
 
-  const resetState = () => {
-    setQuery('');
+  const handleFormSubmit = (query) => {
+    setQuery(query);
     setPage(1);
     setImages([]);
     setImagesOnPage(0);
@@ -76,9 +64,6 @@ export default function App() {
     setIsLoading(false);
     setShowModal(false);
     setError(null);
-  };
-  const handleFormSubmit = () => {
-    resetState();
     console.log(query);
   };
 
@@ -102,7 +87,7 @@ export default function App() {
 
   return (
     <Layout>
-      <Searchbar onSubmit={handleFormSubmit} query={query} setQuery={setQuery}/>
+      <Searchbar onSubmit={handleFormSubmit} query={query} />
 
       {isLoading && <Loader/>}
 
