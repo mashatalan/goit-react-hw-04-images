@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
+import React, { useEffect, useState} from 'react';
+import {ToastContainer, toast} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import { Layout } from './App.styled';
+import {Layout} from './App.styled';
 import Searchbar from './Searchbar/Searchbar';
 import fetchAPI from './serviceAPI/serviceAPI';
 import Modal from './Modal/Modal';
@@ -20,12 +20,32 @@ export default function App() {
   const [currentImageTag, setCurrentImageTag] = useState();
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [ ,setError] = useState(null);
+  const [, setError] = useState(null);
 
 
   const imagesLimit = 12;
 
   useEffect(() => {
+
+    const loadImages = async (query) => {
+      try {
+        setIsLoading(true);
+        const { hits, total } = await fetchAPI(query, page);
+        if (hits.length === 0) {
+          return toast(`🦄 Sorry, but there is no data for '${query}'`, {
+            className: 'toast-message',
+          });
+        }
+        setImages((prevImages) => [...prevImages, ...hits]);
+        setImagesOnPage((prevImagesOnPage) => prevImagesOnPage + hits.length);
+        setTotalImages(total);
+      } catch (error) {
+        setError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     const fetchData = async () => {
       if (!page || query.trim() === '') {
         return;
@@ -41,29 +61,12 @@ export default function App() {
     };
 
     fetchData().catch(e => console.log(e));
-  }, [page]);
 
+  }, [page, query]);
 
-  const loadImages = async (query) => {
-    try {
-      setIsLoading(true);
-      const { hits, total } = await fetchAPI(query, page);
-      if (hits.length === 0) {
-        return toast(`🦄 Sorry, but there is no data for '${query}'`, {
-          className: 'toast-message',
-        });
-      }
-      setImages((prevImages) => [...prevImages, ...hits]);
-      setImagesOnPage((prevImagesOnPage) => prevImagesOnPage + hits.length);
-      setTotalImages(total);
-    } catch (error) {
-      setError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const resetState = () => {
+    setQuery('');
     setPage(1);
     setImages([]);
     setImagesOnPage(0);
@@ -74,21 +77,13 @@ export default function App() {
     setShowModal(false);
     setError(null);
   };
-  const getResult =  (event) => {
-    event.preventDefault();
-    if (query.trim() === '') {
-      return toast(
-        '🦄 Please, enter some data!',
-        { className: 'toast-message', autoClose: 2000 },
-      );
-    }
+  const handleFormSubmit = () => {
     resetState();
-    return loadImages(query);
-
+    console.log(query);
   };
 
   const onLoadMore = () => {
-    setPage(page + 1);
+    setPage(prevPage => prevPage + 1);
   };
 
   const onToggleModal = () => {
@@ -107,14 +102,14 @@ export default function App() {
 
   return (
     <Layout>
-      <Searchbar onSubmit={getResult} setQuery={setQuery} />
+      <Searchbar onSubmit={handleFormSubmit} query={query} setQuery={setQuery}/>
 
-      {isLoading && <Loader />}
+      {isLoading && <Loader/>}
 
-      {images && <ImageGallery images={images} openModal={onOpenModal} />}
+      {images && <ImageGallery images={images} openModal={onOpenModal}/>}
 
       {imagesOnPage >= imagesLimit && imagesOnPage < totalImages && (
-        <Button onLoadMore={onLoadMore} />
+        <Button onLoadMore={onLoadMore}/>
       )}
 
       {showModal && (
@@ -124,7 +119,7 @@ export default function App() {
           currentImageTag={currentImageTag}
         />
       )}
-      <ToastContainer />
+      <ToastContainer/>
     </Layout>
   );
 }

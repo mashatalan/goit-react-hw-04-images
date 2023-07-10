@@ -6,24 +6,21 @@ import { CgCloseR } from 'react-icons/cg';
 export default function Modal({ currentImageUrl, currentImageDescription, onClose }) {
 
   useEffect(() => {
+    const handleEsc = event => {
+      if (event.code === 'Escape') {
+        onClose();
+      }
+    };
     window.addEventListener('keydown', handleEsc);
-  }, [onClose]);
 
-
-  useEffect(() => {
     return () => {
       window.removeEventListener('keydown', handleEsc);
     };
   }, [onClose]);
 
+
   const handleBackdrop = event => {
     if (event.target === event.currentTarget) {
-      onClose();
-    }
-  };
-
-  const handleEsc = event => {
-    if (event.code === 'Escape') {
       onClose();
     }
   };
